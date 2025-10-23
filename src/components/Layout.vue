@@ -98,52 +98,27 @@ const closeWindow = () => {
 
 // 窗口拖动功能
 let isDragging = false
-let startX = 0
-let startY = 0
-let windowX = 0
-let windowY = 0
 
 const startDrag = (e) => {
   isDragging = true
-  startX = e.clientX
-  startY = e.clientY
-
-  // 获取窗口当前位置
-  const { ipcRenderer } = require('electron')
-  const bounds = ipcRenderer.sendSync('get-window-bounds')
-  windowX = bounds.x
-  windowY = bounds.y
-
-  document.addEventListener('mousemove', onDrag)
-  document.addEventListener('mouseup', stopDrag)
-}
-
-const onDrag = (e) => {
-  if (!isDragging) return
 
   const { ipcRenderer } = require('electron')
+  // 开始窗口移动
+  ipcRenderer.send('window-move-start')
 
-  // 计算绝对位置而不是相对移动
-  const deltaX = e.clientX - startX
-  const deltaY = e.clientY - startY
-
-  const newX = windowX + deltaX
-  const newY = windowY + deltaY
-
-  ipcRenderer.send('window-drag', {
-    x: Math.round(newX),
-    y: Math.round(newY)
-  })
+  document.addEventListener('mouseup', stopDrag, { once: true })
 }
 
 const stopDrag = () => {
-  isDragging = false
-  document.removeEventListener('mousemove', onDrag)
-  document.removeEventListener('mouseup', stopDrag)
+  if (isDragging) {
+    const { ipcRenderer } = require('electron')
+    // 停止窗口移动
+    ipcRenderer.send('window-move-end')
+    isDragging = false
+  }
 }
 
 onUnmounted(() => {
-  document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
 })
 </script>

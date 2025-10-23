@@ -123,7 +123,7 @@
       <el-tab-pane label="批量名称替换" name="replace">
         <el-card>
           <template #header>
-            <span>功能3: 批量名称替换并转换为WebP格式</span>
+            <span>功能3: 批量名称替换</span>
           </template>
 
           <div class="function-section">
@@ -161,7 +161,7 @@
                 @click="handleBatchReplaceAndConvert"
                 :loading="replacing"
               >
-                {{ replacing ? '处理中...' : '批量替换并转换' }}
+                {{ replacing ? '处理中...' : '批量替换' }}
               </el-button>
             </div>
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, screen } from 'electron'
 import { join, dirname, basename, extname } from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs'
@@ -171,7 +171,7 @@ ipcMain.handle('batch-rename-convert', async (event, { folderPath, compressToWeb
   }
 })
 
-// 功能3: 批量替换并转换
+// 功能3: 批量名称替换
 ipcMain.handle('batch-replace-convert', async (event, { folderPath, originalName, replaceName }) => {
   try {
     const messages = []
@@ -186,25 +186,16 @@ ipcMain.handle('batch-replace-convert', async (event, { folderPath, originalName
     for (const file of files) {
       const oldPath = join(folderPath, file)
 
-      // 替换文件名中的指定文本
+      // 替换文件名中的指定文本，保留原文件扩展名
       const fileName = basename(file, extname(file))
+      const fileExt = extname(file)
       const newFileName = fileName.replace(new RegExp(originalName, 'g'), replaceName)
-      const newName = `${newFileName}.webp`
+      const newName = `${newFileName}${fileExt}`
       const newPath = join(folderPath, newName)
 
       try {
-        // 如果原文件不是WebP，转换为WebP格式
-        if (extname(file).toLowerCase() !== '.webp') {
-          await sharp(oldPath)
-            .webp({ quality: 80 })
-            .toFile(newPath)
-
-          // 删除原文件
-          fs.unlinkSync(oldPath)
-        } else {
-          // 如果已经是WebP，直接重命名
-          fs.renameSync(oldPath, newPath)
-        }
+        // 直接重命名文件，不进行格式转换
+        fs.renameSync(oldPath, newPath)
 
         messages.push(`成功: ${file} -> ${newName}`)
         processedCount++
@@ -262,14 +253,40 @@ ipcMain.on('get-window-bounds', (event) => {
 })
 
 // 窗口拖动功能
-ipcMain.on('window-drag', (event, { x, y }) => {
-  if (mainWindow) {
-    const bounds = mainWindow.getBounds()
-    mainWindow.setBounds({
-      x: x,
-      y: y,
-      width: bounds.width,
-      height: bounds.height
-    })
-  }
-})
+let movingInterval = null;
+
+ipcMain.on('window-move-start', (event) => {
+  const currentWindow = BrowserWindow.fromWebContents(event.sender);
+  const winPosition = currentWindow.getBounds();
+  const cursorPosition = screen.getCursorScreenPoint();
+
+  const offsetX = cursorPosition.x - winPosition.x;
+  const offsetY = cursorPosition.y - winPosition.y;
+
+  clearInterval(movingInterval);
+  movingInterval = setInterval(() => {
+    // 窗口销毁判断，高频率的更新有可能窗口已销毁，定时器还没结束
+    if (!currentWindow.isDestroyed()) {
+      // 如果窗口失去焦点，则停止移动
+      if (!currentWindow.isFocused()) {
+        clearInterval(movingInterval);
+        movingInterval = null;
+        return;
+      }
+      const newCursorPosition = screen.getCursorScreenPoint();
+      currentWindow.setBounds({
+        x: newCursorPosition.x - offsetX,
+        y: newCursorPosition.y - offsetY,
+        width: winPosition.width,
+        height: winPosition.height,
+      });
+    } else {
+      clearInterval(movingInterval);
+      movingInterval = null;
+    }
+  }, 16); // 每16ms刷新一次
+});
+
+ipcMain.on('window-move-end', () => {
+  clearInterval(movingInterval);
+});
