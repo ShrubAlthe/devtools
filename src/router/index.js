@@ -19,6 +19,12 @@ const routes = [
         name: 'Settings',
         component: () => import('@/views/Settings.vue'),
         meta: { title: '系统设置', icon: 'Setting' }
+      },
+      {
+        path: 'package-tool',
+        name: 'PackageTool',
+        component: () => import('@/views/PackageTool.vue'),
+        meta: { title: '打包工具', icon: 'FolderOpened' }
       }
     ]
   }

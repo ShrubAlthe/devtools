@@ -1,7 +1,5 @@
 <template>
   <div class="image-processing">
-    <h2>图像处理工具</h2>
-
     <el-tabs v-model="activeTab" type="card">
       <!-- 功能1: 图片压缩为WebP -->
       <el-tab-pane label="图片压缩为WebP" name="compress">

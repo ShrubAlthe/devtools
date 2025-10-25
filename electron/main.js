@@ -27,10 +27,10 @@ const createWindow = () => {
   // 开发模式下加载Vite开发服务器
   if (isDev) {
     // 等待Vite服务器启动，然后加载页面
-    const startUrl = 'http://localhost:5182'
+    const startUrl = 'http://localhost:5173'
     mainWindow.loadURL(startUrl).catch(() => {
-      // 如果5182端口被占用，尝试其他端口
-      const fallbackUrls = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180', 'http://localhost:5181']
+      // 如果5173端口被占用，尝试其他端口
+      const fallbackUrls = ['http://localhost:5174', 'http://localhost:5175', 'http://localhost:5176', 'http://localhost:5177', 'http://localhost:5178', 'http://localhost:5179', 'http://localhost:5180', 'http://localhost:5181', 'http://localhost:5182']
 
       const tryLoadUrl = (urlIndex) => {
         if (urlIndex >= fallbackUrls.length) {
@@ -75,6 +75,14 @@ app.on('window-all-closed', () => {
 
 // 选择文件夹
 ipcMain.handle('select-folder', async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  })
+  return result
+})
+
+// 打开目录对话框（兼容打包工具）
+ipcMain.handle('dialog:openDirectory', async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openDirectory']
   })
