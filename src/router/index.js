@@ -25,6 +25,12 @@ const routes = [
         name: 'PackageTool',
         component: () => import('@/views/PackageTool.vue'),
         meta: { title: '打包工具', icon: 'FolderOpened' }
+      },
+      {
+        path: 'seo-tool',
+        name: 'SEOTool',
+        component: () => import('@/views/SEOTool.vue'),
+        meta: { title: 'SEO工具', icon: 'Link' }
       }
     ]
   }

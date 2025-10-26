@@ -1,11 +1,11 @@
 <template>
   <div class="image-processing">
     <el-tabs v-model="activeTab" type="card">
-      <!-- 功能1: 图片压缩为WebP -->
-      <el-tab-pane label="图片压缩为WebP" name="compress">
+      <!-- 功能1: 图片压缩 -->
+      <el-tab-pane label="图片压缩" name="compress">
         <el-card>
           <template #header>
-            <span>功能1: 图片压缩为WebP格式</span>
+            <span>功能1: 图片压缩</span>
           </template>
 
           <div class="function-section">
@@ -30,8 +30,14 @@
               </template>
             </el-upload>
 
-            <div class="filename-suffix">
+            <div class="compress-options">
               <el-form :model="compressForm" label-width="100px">
+                <el-form-item label="压缩格式:">
+                  <el-radio-group v-model="compressForm.format">
+                    <el-radio label="webp">WebP</el-radio>
+                    <el-radio label="avif">AVIF</el-radio>
+                  </el-radio-group>
+                </el-form-item>
                 <el-form-item label="文件名后缀:">
                   <el-input
                     v-model="compressForm.suffix"
@@ -47,10 +53,10 @@
               <el-button
                 type="primary"
                 :disabled="compressFileList.length === 0"
-                @click="handleCompressToWebP"
+                @click="handleCompress"
                 :loading="compressing"
               >
-                {{ compressing ? '压缩中...' : '压缩为WebP格式' }}
+                {{ compressing ? '压缩中...' : `压缩为${compressForm.format === 'webp' ? 'WebP' : 'AVIF'}格式` }}
               </el-button>
               <el-button @click="clearCompressFiles">清空列表</el-button>
             </div>
@@ -190,6 +196,7 @@ const compressFileList = ref([])
 const compressing = ref(false)
 const compressResult = ref([])
 const compressForm = reactive({
+  format: 'webp',
   suffix: ''
 })
 
@@ -223,8 +230,8 @@ const clearCompressFiles = () => {
   compressForm.suffix = ''
 }
 
-// 功能1: 压缩为WebP
-const handleCompressToWebP = async () => {
+// 功能1: 压缩图片
+const handleCompress = async () => {
   if (compressFileList.value.length === 0) {
     ElMessage.warning('请先选择图片文件')
     return
@@ -238,8 +245,9 @@ const handleCompressToWebP = async () => {
 
     for (const file of compressFileList.value) {
       try {
-        const result = await ipcRenderer.invoke('compress-to-webp', {
+        const result = await ipcRenderer.invoke('compress-image', {
           filePath: file.raw.path,
+          format: compressForm.format,
           suffix: compressForm.suffix || ''
         })
         compressResult.value.push(`成功: ${file.name} -> ${result}`)

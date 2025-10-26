@@ -21,6 +21,10 @@
           <el-icon><FolderOpened /></el-icon>
           <span>打包工具</span>
         </el-menu-item>
+        <el-menu-item index="/seo-tool">
+          <el-icon><Link /></el-icon>
+          <span>SEO工具</span>
+        </el-menu-item>
         <el-menu-item index="/settings">
           <el-icon><Setting /></el-icon>
           <span>系统设置</span>
@@ -73,7 +77,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { Picture, Setting, FolderOpened, Minus, FullScreen, Close } from '@element-plus/icons-vue'
+import { Picture, Setting, FolderOpened, Link, Minus, FullScreen, Close } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
