@@ -73,11 +73,15 @@
                   </el-table-column>
                   <el-table-column label="图片名称" min-width="200">
                     <template #default="{ row }">
-                      <el-input
-                        v-model="row.imageName"
-                        @change="handleImageNameChange(row)"
-                        placeholder="图片名称"
-                      />
+                      <div class="image-name-input">
+                        <el-input
+                          v-model="row.imageNameWithoutExt"
+                          @change="handleImageNameChange(row)"
+                          placeholder="图片名称"
+                          style="margin-right: 8px;"
+                        />
+                        <span class="image-extension">{{ row.imageExt }}</span>
+                      </div>
                     </template>
                   </el-table-column>
                   <el-table-column label="alt标签" min-width="200">
@@ -87,6 +91,28 @@
                         @change="handleAltChange(row)"
                         placeholder="alt标签"
                       />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="后缀匹配" width="120" align="center">
+                    <template #default="{ row }">
+                      <el-input
+                        v-model="row.suffixMatch"
+                        @change="handleSuffixChange(row)"
+                        placeholder=".png"
+                        size="small"
+                      />
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="120" align="center">
+                    <template #default="{ row }">
+                      <el-button
+                        type="warning"
+                        size="small"
+                        @click="revertChanges(row)"
+                        :disabled="!row.saved"
+                      >
+                        撤回
+                      </el-button>
                     </template>
                   </el-table-column>
                   <el-table-column prop="originalPath" label="原路径" min-width="300" show-overflow-tooltip />
@@ -224,10 +250,26 @@ const parseHtmlAndImages = async () => {
       // 确保数据具有响应性
       imageGroups.value = result.groups.map(group => ({
         ...group,
-        images: group.images.map(image => ({
-          ...image,
-          modified: false
-        }))
+        images: group.images.map(image => {
+          // 分离图片名称和后缀
+          const lastDotIndex = image.imageName.lastIndexOf('.')
+          const imageNameWithoutExt = lastDotIndex > 0 ? image.imageName.substring(0, lastDotIndex) : image.imageName
+          const imageExt = lastDotIndex > 0 ? image.imageName.substring(lastDotIndex) : ''
+
+          return {
+            ...image,
+            imageNameWithoutExt: imageNameWithoutExt, // 只存储名称部分
+            imageExt: imageExt, // 存储后缀部分
+            originalImageName: image.imageName, // 保存原始图片名称
+            originalImageNameWithoutExt: imageNameWithoutExt, // 保存原始名称部分
+            originalImageExt: imageExt, // 保存原始后缀部分
+            originalAlt: image.alt, // 保存原始alt
+            originalSuffixMatch: '.png', // 初始化后缀匹配
+            suffixMatch: '.png', // 后缀匹配输入框，默认值为.png
+            modified: false,
+            saved: false // 新增：标记是否已保存过修改
+          }
+        })
       }))
 
       if (imageGroups.value.length > 0) {
@@ -271,6 +313,55 @@ const handleAltChange = (row) => {
   row.modified = true
 }
 
+// 处理后缀匹配修改
+const handleSuffixChange = (row) => {
+  row.modified = true
+}
+
+// 撤回修改
+const revertChanges = async (row) => {
+  try {
+    const { ipcRenderer } = require('electron')
+
+    // 创建可序列化的撤回数据
+    const revertData = {
+      htmlFilePath: String(htmlFilePath.value),
+      groupName: String(row.groupName),
+      image: {
+        index: row.index,
+        originalPath: row.originalPath,
+        imageName: row.imageNameWithoutExt + row.imageExt, // 当前修改后的完整名称
+        originalImageName: row.originalImageName, // 原始完整名称
+        alt: row.alt, // 当前修改后的alt
+        originalAlt: row.originalAlt, // 原始alt
+        suffixMatch: row.suffixMatch || '',
+        pictureHtml: row.pictureHtml
+      },
+      imageFolders: Array.from(selectedFolders.value).map(folder => String(folder))
+    }
+
+    console.log('撤回修改，传递的数据:', JSON.parse(JSON.stringify(revertData)))
+
+    const result = await ipcRenderer.invoke('revert-seo-changes', revertData)
+
+    if (result.success) {
+      // 恢复UI数据
+      row.imageNameWithoutExt = row.originalImageNameWithoutExt
+      row.imageExt = row.originalImageExt
+      row.alt = row.originalAlt || ''
+      row.suffixMatch = row.originalSuffixMatch || ''
+      row.modified = false
+      row.saved = false // 撤回后禁用撤回按钮
+
+      ElMessage.success('修改已撤回')
+    } else {
+      ElMessage.error('撤回失败: ' + result.error)
+    }
+  } catch (error) {
+    ElMessage.error('撤回失败: ' + error.message)
+  }
+}
+
 // 检查是否有未保存的修改
 const hasChanges = (groupName) => {
   const group = imageGroups.value.find(g => g.name === groupName)
@@ -297,10 +388,11 @@ const saveChanges = async (groupName) => {
     const serializableImages = modifiedImages.map(img => ({
       index: img.index,
       originalPath: img.originalPath,
-      imageName: img.imageName,
+      imageName: img.imageNameWithoutExt + img.imageExt, // 组合名称和后缀
       alt: img.alt,
       groupName: img.groupName,
-      pictureHtml: img.pictureHtml
+      pictureHtml: img.pictureHtml,
+      suffixMatch: img.suffixMatch || ''
     }))
 
     // 确保所有数据都是可序列化的
@@ -316,10 +408,12 @@ const saveChanges = async (groupName) => {
     const result = await ipcRenderer.invoke('save-seo-changes', serializableData)
 
     if (result.success) {
-      // 重置修改状态
+      // 重置修改状态，但不更新原始数据，以便撤回功能可以回滚到原始状态
       modifiedImages.forEach(img => {
         img.modified = false
-        img.originalPath = img.imageName // 更新原路径显示
+        img.saved = true // 标记为已保存，启用撤回按钮
+        // 注意：这里不更新 originalImageName、originalAlt、originalSuffixMatch
+        // 这样撤回按钮可以回滚到真正的原始状态
       })
       ElMessage.success('保存成功')
     } else {
@@ -433,5 +527,16 @@ const tableRowClassName = ({ row }) => {
 
 :deep(.modified-row) {
   background-color: #f0f9ff !important;
+}
+
+.image-name-input {
+  display: flex;
+  align-items: center;
+}
+
+.image-extension {
+  color: #909399;
+  font-size: 14px;
+  white-space: nowrap;
 }
 </style>
