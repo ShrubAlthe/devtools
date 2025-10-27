@@ -1,7 +1,7 @@
 <template>
   <div class="image-processing">
     <el-tabs v-model="activeTab" type="card">
-      <!-- 功能1: 图片压缩 -->
+      <!-- 图片压缩 -->
       <el-tab-pane label="图片压缩" name="compress">
         <el-card>
           <template #header>
@@ -73,11 +73,11 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 功能2: 批量重命名并转换 -->
+      <!-- 批量重命名并转换 -->
       <el-tab-pane label="批量重命名并转换" name="rename">
         <el-card>
           <template #header>
-            <span>功能2: 批量重命名并转换</span>
+            <span>批量重命名并转换</span>
           </template>
 
           <div class="function-section">
@@ -123,11 +123,11 @@
         </el-card>
       </el-tab-pane>
 
-      <!-- 功能3: 批量名称替换 -->
+      <!-- 批量名称替换 -->
       <el-tab-pane label="批量名称替换" name="replace">
         <el-card>
           <template #header>
-            <span>功能3: 批量名称替换</span>
+            <span>批量名称替换</span>
           </template>
 
           <div class="function-section">
@@ -197,7 +197,7 @@ const compressing = ref(false)
 const compressResult = ref([])
 const compressForm = reactive({
   format: 'webp',
-  suffix: ''
+  suffix: '.png'
 })
 
 // 功能2: 重命名相关数据
@@ -241,16 +241,14 @@ const handleCompress = async () => {
   compressResult.value = []
 
   try {
-    const { ipcRenderer } = require('electron')
-
     for (const file of compressFileList.value) {
       try {
-        const result = await ipcRenderer.invoke('compress-image', {
+        const result = await window.electronAPI.compressImage({
           filePath: file.raw.path,
           format: compressForm.format,
           suffix: compressForm.suffix || ''
         })
-        compressResult.value.push(`成功: ${file.name} -> ${result}`)
+        compressResult.value.push(`成功: ${file.name} -> ${result.outputPath.split('\\').pop()}`)
       } catch (error) {
         compressResult.value.push(`失败: ${file.name} - ${error.message}`)
       }
@@ -267,8 +265,7 @@ const handleCompress = async () => {
 // 功能2: 选择文件夹
 const selectRenameFolder = async () => {
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('select-folder')
+    const result = await window.electronAPI.selectFolder()
     if (!result.canceled) {
       renameFolderPath.value = result.filePaths[0]
     }
@@ -288,8 +285,7 @@ const handleBatchRenameAndConvert = async () => {
   renameResult.value = []
 
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('batch-rename-convert', {
+    const result = await window.electronAPI.batchRenameConvert({
       folderPath: renameFolderPath.value,
       compressToWebp: renameCompressToWebp.value
     })
@@ -310,8 +306,7 @@ const handleBatchRenameAndConvert = async () => {
 // 功能3: 选择文件夹
 const selectReplaceFolder = async () => {
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('select-folder')
+    const result = await window.electronAPI.selectFolder()
     if (!result.canceled) {
       replaceFolderPath.value = result.filePaths[0]
     }
@@ -336,8 +331,7 @@ const handleBatchReplaceAndConvert = async () => {
   replaceResult.value = []
 
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('batch-replace-convert', {
+    const result = await window.electronAPI.batchReplaceConvert({
       folderPath: replaceFolderPath.value,
       originalName: replaceForm.originalName,
       replaceName: replaceForm.replaceName || ''

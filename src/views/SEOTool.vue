@@ -164,8 +164,7 @@ const imageGroups = ref([])
 // 选择HTML文件
 const selectHtmlFile = async () => {
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('dialog:openFile', {
+    const result = await window.electronAPI.openFile({
       filters: [
         { name: 'HTML Files', extensions: ['html', 'htm'] }
       ]
@@ -182,8 +181,7 @@ const selectHtmlFile = async () => {
 // 选择图片目录
 const selectImageFolders = async () => {
   try {
-    const { ipcRenderer } = require('electron')
-    const result = await ipcRenderer.invoke('dialog:openDirectory', {
+    const result = await window.electronAPI.openDirectory({
       properties: ['openDirectory', 'multiSelections']
     })
     if (!result.canceled) {
@@ -211,7 +209,6 @@ const parseHtmlAndImages = async () => {
   errorMessage.value = ''
 
   try {
-    const { ipcRenderer } = require('electron')
     console.log('开始解析HTML和图片...')
     console.log('HTML文件路径:', htmlFilePath.value)
     console.log('图片目录:', selectedFolders.value)
@@ -225,21 +222,21 @@ const parseHtmlAndImages = async () => {
 
     // 逐个参数测试
     console.log('测试参数1: htmlFilePath')
-    const test1 = await ipcRenderer.invoke('parse-html-images', {
+    const test1 = await window.electronAPI.parseHtmlImages({
       htmlFilePath: htmlFilePath.value,
       imageFolders: []
     })
     console.log('测试1结果:', test1)
 
     console.log('测试参数2: imageFolders')
-    const test2 = await ipcRenderer.invoke('parse-html-images', {
+    const test2 = await window.electronAPI.parseHtmlImages({
       htmlFilePath: '',
       imageFolders: imageFoldersArray
     })
     console.log('测试2结果:', test2)
 
     // 完整调用
-    const result = await ipcRenderer.invoke('parse-html-images', {
+    const result = await window.electronAPI.parseHtmlImages({
       htmlFilePath: htmlFilePath.value,
       imageFolders: imageFoldersArray
     })
@@ -321,7 +318,6 @@ const handleSuffixChange = (row) => {
 // 撤回修改
 const revertChanges = async (row) => {
   try {
-    const { ipcRenderer } = require('electron')
 
     // 创建可序列化的撤回数据
     const revertData = {
@@ -342,7 +338,7 @@ const revertChanges = async (row) => {
 
     console.log('撤回修改，传递的数据:', JSON.parse(JSON.stringify(revertData)))
 
-    const result = await ipcRenderer.invoke('revert-seo-changes', revertData)
+    const result = await window.electronAPI.revertSeoChanges(revertData)
 
     if (result.success) {
       // 恢复UI数据
@@ -382,7 +378,6 @@ const saveChanges = async (groupName) => {
   saving.value = true
 
   try {
-    const { ipcRenderer } = require('electron')
 
     // 创建可序列化的图片对象
     const serializableImages = modifiedImages.map(img => ({
@@ -405,7 +400,7 @@ const saveChanges = async (groupName) => {
 
     console.log('保存修改，传递的数据:', JSON.parse(JSON.stringify(serializableData)))
 
-    const result = await ipcRenderer.invoke('save-seo-changes', serializableData)
+    const result = await window.electronAPI.saveSeoChanges(serializableData)
 
     if (result.success) {
       // 重置修改状态，但不更新原始数据，以便撤回功能可以回滚到原始状态

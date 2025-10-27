@@ -90,18 +90,15 @@ const currentTitle = computed(() => {
 
 // 窗口控制方法
 const minimizeWindow = () => {
-  const { ipcRenderer } = require('electron')
-  ipcRenderer.send('window-minimize')
+  window.electronAPI.minimizeWindow()
 }
 
 const maximizeWindow = () => {
-  const { ipcRenderer } = require('electron')
-  ipcRenderer.send('window-maximize')
+  window.electronAPI.maximizeWindow()
 }
 
 const closeWindow = () => {
-  const { ipcRenderer } = require('electron')
-  ipcRenderer.send('window-close')
+  window.electronAPI.closeWindow()
 }
 
 // 窗口拖动功能
@@ -110,18 +107,16 @@ let isDragging = false
 const startDrag = (e) => {
   isDragging = true
 
-  const { ipcRenderer } = require('electron')
   // 开始窗口移动
-  ipcRenderer.send('window-move-start')
+  window.electronAPI.windowMoveStart()
 
   document.addEventListener('mouseup', stopDrag, { once: true })
 }
 
 const stopDrag = () => {
   if (isDragging) {
-    const { ipcRenderer } = require('electron')
     // 停止窗口移动
-    ipcRenderer.send('window-move-end')
+    window.electronAPI.windowMoveEnd()
     isDragging = false
   }
 }

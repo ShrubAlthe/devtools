@@ -50,9 +50,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 
-const { ipcRenderer } = require('electron')
-const fs = require('fs')
-const path = require('path')
+// 使用window.electronAPI替代require('electron')
 
 const form = reactive({
   projectPath: '',
@@ -75,7 +73,7 @@ const addLog = (message) => {
 // 选择项目目录
 const selectProjectPath = async () => {
   try {
-    const result = await ipcRenderer.invoke('select-folder')
+    const result = await window.electronAPI.selectFolder()
     if (!result.canceled && result.filePaths.length > 0) {
       form.projectPath = result.filePaths[0]
     }
@@ -87,7 +85,7 @@ const selectProjectPath = async () => {
 // 选择输出目录
 const selectOutputPath = async () => {
   try {
-    const result = await ipcRenderer.invoke('select-folder')
+    const result = await window.electronAPI.selectFolder()
     if (!result.canceled && result.filePaths.length > 0) {
       form.outputPath = result.filePaths[0]
     }
