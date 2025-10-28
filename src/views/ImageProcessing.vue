@@ -61,7 +61,7 @@
               <el-button @click="clearCompressFiles">清空列表</el-button>
             </div>
 
-            <div v-if="compressResult.length > 0" class="result-section">
+            <div v-if="compressResult && compressResult.length > 0" class="result-section">
               <h4>压缩结果:</h4>
               <ul>
                 <li v-for="(result, index) in compressResult" :key="index">
@@ -111,7 +111,7 @@
               </el-button>
             </div>
 
-            <div v-if="renameResult.length > 0" class="result-section">
+            <div v-if="renameResult && renameResult.length > 0" class="result-section">
               <h4>处理结果:</h4>
               <ul>
                 <li v-for="(result, index) in renameResult" :key="index">
@@ -169,7 +169,7 @@
               </el-button>
             </div>
 
-            <div v-if="replaceResult.length > 0" class="result-section">
+            <div v-if="replaceResult && replaceResult.length > 0" class="result-section">
               <h4>处理结果:</h4>
               <ul>
                 <li v-for="(result, index) in replaceResult" :key="index">
@@ -291,8 +291,15 @@ const handleBatchRenameAndConvert = async () => {
     })
 
     if (result.success) {
-      renameResult.value = result.messages
-      ElMessage.success(`处理完成，共处理 ${result.processedCount} 个文件`)
+      // 将results转换为messages格式
+      renameResult.value = result.results.map(item => {
+        if (item.converted) {
+          return `重命名并转换: ${item.original} -> ${item.renamed}`
+        } else {
+          return `重命名: ${item.original} -> ${item.renamed}`
+        }
+      })
+      ElMessage.success(`处理完成，共处理 ${result.results.length} 个文件`)
     } else {
       ElMessage.error('处理失败: ' + result.error)
     }
@@ -338,8 +345,11 @@ const handleBatchReplaceAndConvert = async () => {
     })
 
     if (result.success) {
-      replaceResult.value = result.messages
-      ElMessage.success(`处理完成，共处理 ${result.processedCount} 个文件`)
+      // 将results转换为messages格式
+      replaceResult.value = result.results.map(item =>
+        `替换: ${item.original} -> ${item.renamed}`
+      )
+      ElMessage.success(`处理完成，共处理 ${result.results.length} 个文件`)
     } else {
       ElMessage.error('处理失败: ' + result.error)
     }

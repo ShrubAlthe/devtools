@@ -34,8 +34,7 @@ const createWindow = async () => {
       preload: join(__dirname, 'preload.js')
     },
     frame: false,
-    titleBarStyle: 'hidden',
-    backgroundColor: '#f5f5f5'
+    titleBarStyle: 'hidden'
   })
 
   // 注册所有IPC处理程序

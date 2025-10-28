@@ -35,7 +35,7 @@
     <!-- 主内容区 -->
     <el-container>
       <!-- 顶部导航栏 -->
-      <el-header class="header" ref="headerRef" @mousedown="startDrag">
+      <el-header class="header" ref="headerRef">
         <div class="header-left">
           <h3>{{ currentTitle }}</h3>
         </div>
@@ -101,29 +101,6 @@ const closeWindow = () => {
   window.electronAPI.closeWindow()
 }
 
-// 窗口拖动功能
-let isDragging = false
-
-const startDrag = (e) => {
-  isDragging = true
-
-  // 开始窗口移动
-  window.electronAPI.windowMoveStart()
-
-  document.addEventListener('mouseup', stopDrag, { once: true })
-}
-
-const stopDrag = () => {
-  if (isDragging) {
-    // 停止窗口移动
-    window.electronAPI.windowMoveEnd()
-    isDragging = false
-  }
-}
-
-onUnmounted(() => {
-  document.removeEventListener('mouseup', stopDrag)
-})
 </script>
 
 <style scoped>
@@ -164,9 +141,21 @@ onUnmounted(() => {
   box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  app-region: drag;
+  -webkit-app-region: drag;
+}
+
 .header-left h3 {
   color: #333;
   margin: 0;
+  width: 100%;
 }
 
 .header-right {
