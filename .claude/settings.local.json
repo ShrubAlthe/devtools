@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run dev)",
+      "Bash(npm run electron:dev)",
+      "Bash(npm install -D cross-env)",
+      "Bash(cross-env NODE_ENV=development electron .)",
+      "Bash(npx cross-env NODE_ENV=development electron .)",
+      "Bash(npm install sharp)",
+      "Bash(taskkill /f /im electron.exe)",
+      "Bash(taskkill /F /IM electron.exe)",
+      "Bash(powershell \"Get-Process electron -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(dir \"D:\\windowsapp\\devtools\\test-project\" /s)",
+      "Bash(node test-package.js)",
+      "Bash(del test-package.js)",
+      "Bash(npm install archiver)",
+      "Bash(node test-package-updated.js)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
